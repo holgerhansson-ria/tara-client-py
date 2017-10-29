@@ -1,0 +1,27 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+"asn1crypto" = "==0.23.0"
+certifi = "==2017.7.27.1"
+cffi = "==1.11.2"
+chardet = "==3.0.4"
+cryptography = "==2.1.2"
+django = "==1.11.6"
+gunicorn = "==19.7.1"
+idna = "==2.6"
+pycparser = "==2.18"
+pyjwt = "==1.5.3"
+pytz = "==2017.2"
+requests = "==2.18.4"
+"urllib3" = "==1.22"
+whitenoise = "*"
+
+
+[dev-packages]
+
