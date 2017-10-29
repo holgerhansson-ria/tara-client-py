@@ -25,7 +25,7 @@ SECRET_KEY = 'nnczak68hys^5k=wdtmk__t@(6^s*ws3@+z85na7a9*esbo2ns'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["peaceful-castle-64985.herokuapp.com"]
+ALLOWED_HOSTS = ["tara-client-py.herokuapp.com"]
 
 
 # Application definition
