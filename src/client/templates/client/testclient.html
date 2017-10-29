@@ -1,0 +1,74 @@
+{% load staticfiles %}
+{% load index_tag %}
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="{% static 'css/client.css' %}">
+
+<html>
+	<h3 class="txt">TARA testklient</h3>
+	<hr>
+  	<h4 class="txt">Parameetrid</h4>
+  	<div class="row">
+  		<form class="form" method="post"> {% csrf_token %}
+		  	<pre class="txt">
+				{% for k, v in query_params.items %}
+					{{ k }}: {{ v }} </br>
+				{% endfor %}
+		  		<hr>
+		  		<div> 
+		  		{% for field in form %}
+					<div class="col-sm-3"> 
+		    			{{ field }}
+		    		</div>
+				{% endfor %}
+				</div>
+				<div>
+					<button type="submit" id="main_form" class="col-sm-3 btn btn-primary">Muuda</button>
+				</div>  
+			</pre>
+		</form>
+	</div> 
+	<div class="row">
+		<pre class="txt">
+				<form method="get">
+					<input type="submit" value="Päri autoriseerimiskood" name="auth" id="auth" class="btn btn-success"/>
+				</form>
+				{% if url_with_params is not None %}
+					GET {{ url_with_params }}
+				{% endif %}
+		</pre>
+	</div>
+	<div class="row">
+		<pre class="txt">
+			<form method="get">
+				<input type="submit" value="Päri identsustõend" name="idtoken" id="id_token" class="btn btn-success"/>
+			</form>
+			{% if params is not None %}
+				POST https://tara-test.ria.ee/oidc/token </br>
+				Content-Type: application/x-www-form-urlencoded </br>
+				Authorization: Basic {{ b64value }} </br></br>
+
+				Params: </br>
+				{% for k, v in params.items %}
+					{{ k }}: {{ v }} </br>
+				{% endfor %}
+			{% endif %}
+		</pre>
+		</br>
+	</div>
+	<hr>
+	<div class="row">
+		<h4 class="txt"> Vastuspäring </h4>
+		<pre class="txt">
+				{% for item in headers %}
+					{{ item.0 }}: {{ item.1 }} </br>
+				{% endfor %}
+			</br>
+				{% for k, v in message.items %}
+					{{ k }}: {{ v }} </br>
+				{% endfor %}
+				{{ response }}
+		</pre>
+	</div>
+</html>
