@@ -142,8 +142,10 @@ def testclient(request):
 		# opener = urllib.request.build_opener(http_logger)
 		# urllib.request.install_opener(opener)
 
-		if request.session['b64'] not in (None, ""):
-			b64auth = request.session['b64']
+		try:
+			if request.session['b64'] not in (None, ""):
+				b64auth = request.session['b64']
+		except KeyError: print("No base64 cookie")
 
 		if updated_query_params not in (None, ""):
 			redirect_uri = updated_query_params['redirect_uri']
