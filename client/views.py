@@ -5,6 +5,7 @@ from .clientconf import *
 
 import urllib, base64, json, jwt, requests
 
+
 class parameterForm(forms.Form):
     client_id = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client ID", 'class': "form-control"}))
     secret = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client Secret", 'class': "form-control"}))
@@ -16,123 +17,61 @@ def readableParams(params):
 	readable_params = {k:v[0] for k, v in readable_params.items()}
 	return readable_params
 
-def updateParams(old_params, new_id=None, new_uri=None):
-	# Extract old parameters
-	params = urllib.parse.parse_qs(old_params)
-
-	try:
-		if new_uri not in (None, ""):
-			params["redirect_uri"][0] = new_uri
-			print("Updated URI")
-		else:
-			print("Cannot update URL, because new_uri parameter is empty")
-	except KeyError: 
-		print("No redirect uri in URL")
-	try:
-		if new_id not in (None, ""):
-			params["client_id"][0] = new_id
-			print("Updated client_id")
-		else:
-			print("Cannot update client id, because client ID parameter is empty")
-	except KeyError: 
-		print("No client_id in URL")
-
-	finally:
-		# Encode the updated URL
-		params = urllib.parse.urlencode(params, doseq=True)
-		return params
-
-def generateAuthHeader(old_id=defaultClientId, new_id=None, old_secret=defaultSecret, new_secret=None):
-	isnew = False
-	if new_id not in (None, ""):
-		client_id = new_id
-		isnew = True
-	else: client_id = old_id
-	if new_secret not in (None, ""):
-		secret = new_secret
-		isnew = True
-	else: secret = old_secret
+def generateAuthHeader(client_id, secret):
 	
+	# Combine client_id and secret into one string
 	combined = client_id+":"+secret
 
 	# Encode client_id and secret
 	try:
 		b64auth = base64.b64encode(bytes(combined,'ascii')).decode('ascii')
-		if isnew: print("Created new authorization header value")
+		print("Created new authorization header value")
 	except Exception as err:
 		print(err)
 		b64auth = ""
 
 	return b64auth
 
-def testclient(request):
-
-	# Initiate variables
-	response = ""
-	updated_query_params = None
-	received_id = None
-	code = None
-	headers = None
-	message = None
-	params = None
-	form = parameterForm()
+def testclient(request, updated=False):
 
 	# Import default values from clientconf.py
-	defaultUrl = defaultAuthUrl
-	client_id = defaultClientId
-	client_secret = defaultSecret
-	scope = defaultScope
-	response_type = defaultResponse_type
-	redirect_uri = defaultRedirect_uri
-	state = defaultState
+	if updated == False:
+		params = default_params
 
-	# Encode authorization query parameters and add to URL
-	query_params = urllib.parse.urlencode({'scope': scope, 'client_id': client_id, 'response_type': response_type, 'redirect_uri': redirect_uri, 'state': state}, doseq=True)
-	url_with_params = defaultUrl + "?" + query_params
-
-	# Generate b64 encoded Authorization header value (client_id:secret)
-	b64auth = generateAuthHeader()
+	# Initiate form for parameters
+	form = parameterForm()
 
 	# If user submits changes to parameters
 	if request.method == 'POST':
+		updated = True
+
 		form = parameterForm(request.POST)
 		if form.is_valid():
-			cd = form.cleaned_data
-			request.session['client_id'] = cd['client_id']
-			request.session['secret'] = cd['secret']
-			request.session['redirect_uri'] = cd['redirect_uri']
+			clean_data = form.cleaned_data
 
-			# Update query parameters & URL
-			updated_query_params = updateParams(query_params, request.session['client_id'], request.session['redirect_uri'])
-			updated_url_with_params = defaultUrl + "?" + updated_query_params
+		posted_params_list = list(clean_data.keys())
 
-			# Update Authorization URL
-			b64auth = generateAuthHeader(client_id, request.session['client_id'], client_secret, request.session['secret'])
-			request.session['b64'] = b64auth
+		# Change all new posted parameters
+		for new_param in posted_params_list:
+			if clean_data.get(new_param) != "":
+				params[new_param] = clean_data.get(new_param)
 
-			# Empty cookie values
-			request.session['client_id'] = ""
-			request.session['secret'] = ""
-			request.session['redirect_uri'] = ""
+	# Build authorization code GET query
+	auth_query_params = urllib.parse.urlencode({'scope': params['scope'], 'client_id': params['client_id'], 'response_type': params['response_type'], 'redirect_uri': params['redirect_uri'], 'state': params['state']}, doseq=True)
+	auth_query = params['authUrl'] + "?" + auth_query_params
 
 	# If user requests authorization code
 	if(request.GET.get('auth')):
-		if updated_query_params is None:
-			return redirect(url_with_params)
-		else:
-			return redirect(updated_url_with_params)
+		return redirect(auth_query)
 
-	# If URL /response receives a code from server
+	# If URL /callback receives a code from server
 	if(request.GET.get('code')):
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
 		code = request.GET.get('code')
 		request.session['code'] = code
 
-		if updated_query_params is None:
-			return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'url_with_params': url_with_params, 'query_params': readableParams(query_params)})
-		else:
-			return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'url_with_params': updated_url_with_params, 'query_params': readableParams(updated_query_params)})
+		return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'auth_query': auth_query, 'auth_query_params': readableParams(auth_query_params)})
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
@@ -142,26 +81,23 @@ def testclient(request):
 		# opener = urllib.request.build_opener(http_logger)
 		# urllib.request.install_opener(opener)
 
-		try:
-			if request.session['b64'] not in (None, ""):
-				b64auth = request.session['b64']
-		except KeyError: print("No base64 cookie")
+		# Encode POST query parameters and create POST request
+		b64value = generateAuthHeader(params['client_id'], params['secret'])
+		post_params = urllib.parse.urlencode({'grant_type': 'authorization_code', 'code': request.session['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
+		post_query = urllib.request.Request("https://tara-test.ria.ee/oidc/token", post_params)
+		post_query.add_header('Authorization','Basic '+ b64value)
 
-		if updated_query_params not in (None, ""):
-			redirect_uri = updated_query_params['redirect_uri']
-
-		params = urllib.parse.urlencode({'grant_type': 'authorization_code', 'code': request.session['code'], 'redirect_uri': redirect_uri}).encode("utf-8")
-		q = urllib.request.Request("https://tara-test.ria.ee/oidc/token", params)
-		q.add_header('Authorization','Basic '+ b64auth)
-		params = params.decode("utf-8")
-		params = urllib.parse.parse_qs(params)
-		params = {k:v[0] for k, v in params.items()}
+		post_params = readableParams(post_params.decode("utf-8"))
+		
+		message = ""
+		response_error = ""
 
 		try:
-			post_request = urllib.request.urlopen(q)
+			# Send request and read response message
+			post_request = urllib.request.urlopen(post_query)
 			message = post_request.read().decode("utf-8")
 
-			# Convert str response to dict
+			# Convert str response to dict, decode jwt
 			message = json.loads(message)
 			message["id_token"] = jwt.decode(message["id_token"], algorithm='RS256', verify=False)
 
@@ -169,13 +105,10 @@ def testclient(request):
 			headers = post_request.info().items()
 
 		except urllib.error.HTTPError as e: 
-			response = e
+			response_error = e
 			headers = e.headers.items()
 
-		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response': response, 'params': params, 'url_with_params': url_with_params, 'form': form, 'query_params': readableParams(query_params), 'b64value': b64auth})
+		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_params': post_params, 'form': form, 'auth_query': auth_query, 'auth_query_params': readableParams(auth_query_params), 'b64value': b64value})
 	
 	else:
-		if updated_query_params is None:
-			return render(request, 'client/testclient.html', {'response': response, 'url_with_params': url_with_params, 'form': form, 'query_params': readableParams(query_params)})
-		else:
-			return render(request, 'client/testclient.html', {'response': response, 'url_with_params': updated_url_with_params, 'form': form, 'query_params': readableParams(updated_query_params)})
+		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'auth_query_params': readableParams(auth_query_params)})

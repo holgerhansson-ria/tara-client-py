@@ -12,7 +12,7 @@
   	<div class="row">
   		<form class="form" method="post"> {% csrf_token %}
 		  	<pre class="txt">
-				{% for k, v in query_params.items %}
+				{% for k, v in auth_query_params.items %}
 					{{ k }}: {{ v }} </br>
 				{% endfor %}
 		  		<hr>
@@ -34,8 +34,8 @@
 				<form method="get">
 					<input type="submit" value="Päri autoriseerimiskood" name="auth" id="auth" class="btn btn-success"/>
 				</form>
-				{% if url_with_params is not None %}
-					GET {{ url_with_params }}
+				{% if auth_query is not None %}
+					GET {{ auth_query }}
 				{% endif %}
 		</pre>
 	</div>
@@ -68,7 +68,7 @@
 				{% for k, v in message.items %}
 					{{ k }}: {{ v }} </br>
 				{% endfor %}
-				{{ response }}
+				{{ response_error }}
 		</pre>
 	</div>
 </html>

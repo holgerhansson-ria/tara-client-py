@@ -1,9 +1,11 @@
 # clientconf.py
 
-defaultAuthUrl = 'https://tara-test.ria.ee/oidc/authorize'
-defaultScope = 'openid'
-defaultResponse_type = 'code'
-defaultRedirect_uri = "https://tara-client-py.herokuapp.com/response"
-defaultClientId = 'openIdDemo2'
-defaultSecret = 'secret'
-defaultState = 'hkMVY7vjuN7xyLs5'
+default_params = {
+	"authUrl": 'https://tara-test.ria.ee/oidc/authorize',
+	"scope": 'openid',
+	"response_type": 'code',
+	"redirect_uri": "https://tara-client-py.herokuapp.com/response",
+	"client_id": 'openIdDemo2',
+	"secret": 'secret',
+	"state": 'hkMVY7vjuN7xyLs5'
+}
