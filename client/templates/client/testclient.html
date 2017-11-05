@@ -1,30 +1,33 @@
-{% load staticfiles %}
-{% load index_tag %}
+{% load static %}
 
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 <link rel="stylesheet" href="{% static 'css/client.css' %}">
+<script type="text/javascript" src="{% static 'js/placeholder.js' %}"></script>
 
 <html>
 	<h3 class="txt">TARA testklient</h3>
 	<hr>
   	<h4 class="txt">Parameetrid</h4>
-  	<div class="row">
+  	<div class="container-fluid">
   		<form class="form" method="post"> {% csrf_token %}
-		  	<pre class="txt">
-				{% for k, v in auth_query_params.items %}
-					{{ k }}: {{ v }} </br>
-				{% endfor %}
-		  		<hr>
-		  		<div> 
-		  		{% for field in form %}
-					<div class="col-sm-3"> 
-		    			{{ field }}
-		    		</div>
-				{% endfor %}
-				</div>
-				<div>
-					<button type="submit" id="main_form" class="col-sm-3 btn btn-primary">Muuda</button>
+		  	<pre>
+		  		<div class="row">
+		  			<div class="col-sm-12 param">  
+					{% for k, v in params.items %}
+						{{ k }}: {{ v }} </br>
+					{% endfor %}
+					</div>
+					<div class="row"> 
+			  		{% for field in form  %}
+						<div class="col-sm-3"> 
+			    			{{ field }}
+			    		</div>
+					{% endfor %}
+					</div>
+		  		</div>
+				<div class="row">
+					<button type="submit" id="main_form" class="col-sm-2 btn btn-primary">Muuda</button>
 				</div>  
 			</pre>
 		</form>
@@ -44,13 +47,13 @@
 			<form method="get">
 				<input type="submit" value="Päri identsustõend" name="idtoken" id="id_token" class="btn btn-success"/>
 			</form>
-			{% if params is not None %}
-				POST https://tara-test.ria.ee/oidc/token </br>
+			{% if post_params is not None %}
+				POST {{ tokenUrl }} </br>
 				Content-Type: application/x-www-form-urlencoded </br>
 				Authorization: Basic {{ b64value }} </br></br>
 
 				Params: </br>
-				{% for k, v in params.items %}
+				{% for k, v in post_params.items %}
 					{{ k }}: {{ v }} </br>
 				{% endfor %}
 			{% endif %}
@@ -72,3 +75,4 @@
 		</pre>
 	</div>
 </html>
+

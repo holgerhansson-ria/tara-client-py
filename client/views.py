@@ -7,11 +7,15 @@ import urllib, base64, json, jwt, requests
 
 
 class parameterForm(forms.Form):
-    client_id = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client ID", 'class': "form-control"}))
-    secret = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client Secret", 'class': "form-control"}))
-    redirect_uri = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Redirect URI", 'class': "form-control"}))
+    client_id = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client ID", "id": "client_id", 'class': "form-control"}))
+    secret = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client Secret", "id": "secret", 'class': "form-control"}))
+    redirect_uri = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Redirect URI", "id": "redirect_uri", 'class': "form-control"}))
+    scope = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Scope", "id": "scope", 'class': "form-control"}))
+    state = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "State", "id": "state", 'class': "form-control"}))
+    response_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Response Type", "id": "response_type", 'class': "form-control"}))
+    grant_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Grant Type", "id": "grant_type", 'class': "form-control"}))
 
-# Create HTMl friendly parameters
+# Create HTML friendly parameters
 def readableParams(params):
 	readable_params = urllib.parse.parse_qs(params)
 	readable_params = {k:v[0] for k, v in readable_params.items()}
@@ -82,12 +86,14 @@ def testclient(request, updated=False):
 		# urllib.request.install_opener(opener)
 
 		# Encode POST query parameters and create POST request
+		tokenUrl = params['tokenUrl']
 		b64value = generateAuthHeader(params['client_id'], params['secret'])
-		post_params = urllib.parse.urlencode({'grant_type': 'authorization_code', 'code': request.session['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
-		post_query = urllib.request.Request("https://tara-test.ria.ee/oidc/token", post_params)
+		post_params = urllib.parse.urlencode({'grant_type': params['grant_type'], 'code': request.session['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
+		post_query = urllib.request.Request(tokenUrl, post_params)
 		post_query.add_header('Authorization','Basic '+ b64value)
 
 		post_params = readableParams(post_params.decode("utf-8"))
+
 		
 		message = ""
 		response_error = ""
@@ -108,7 +114,7 @@ def testclient(request, updated=False):
 			response_error = e
 			headers = e.headers.items()
 
-		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_params': post_params, 'form': form, 'auth_query': auth_query, 'auth_query_params': readableParams(auth_query_params), 'b64value': b64value})
+		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_params': post_params, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
 	else:
-		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'auth_query_params': readableParams(auth_query_params)})
+		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'params': params})

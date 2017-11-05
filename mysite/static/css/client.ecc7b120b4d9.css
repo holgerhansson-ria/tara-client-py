@@ -1,0 +1,38 @@
+/* Buttons */
+
+.btn {
+	border-radius: 0px;
+	margin-left: 5px;
+	margin-top: 5px;
+}
+
+/* Code blocks */
+
+.txt {
+    margin-left: 30px;
+    margin-right: 350px;
+}
+
+code {
+    white-space: normal;
+}
+
+pre {
+    white-space: normal;
+}
+
+/* Form */
+
+.form {
+    margin-right: 25px;
+}
+
+.form-control {
+    margin-bottom: 5px;
+}
+
+#main_form {
+	margin-top: 15px;
+}
+
+
