@@ -77,7 +77,7 @@ def testclient(request, updated=False):
 
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
-		params[code] = request.GET.get('code')
+		params['code'] = request.GET.get('code')
 
 		return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'auth_query': auth_query, 'params': params})
 
