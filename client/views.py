@@ -86,6 +86,9 @@ def testclient(request, updated=False):
 			# opener = urllib.request.build_opener(http_logger)
 			# urllib.request.install_opener(opener)
 
+			if request.session['code'] in (None, ""):
+				request.session['code'] = "empty"
+
 			# Encode POST query parameters and create POST request
 			tokenUrl = params['tokenUrl']
 			b64value = generateAuthHeader(params['client_id'], params['secret'])
@@ -115,7 +118,7 @@ def testclient(request, updated=False):
 				response_error = e
 				headers = e.headers.items()
 
-		except KeyError as e:
+		except Exception as e:
 			response_error = e
 			message = ""
 			headers = ""
