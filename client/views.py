@@ -100,16 +100,16 @@ def testclient(request, updated=False):
 			response_error = ""
 
 			try:
-			# Send request and read response message
-			post_request = urllib.request.urlopen(post_query)
-			message = post_request.read().decode("utf-8")
+				# Send request and read response message
+				post_request = urllib.request.urlopen(post_query)
+				message = post_request.read().decode("utf-8")
 
-			# Convert str response to dict, decode jwt
-			message = json.loads(message)
-			message["id_token"] = jwt.decode(message["id_token"], algorithm='RS256', verify=False)
+				# Convert str response to dict, decode jwt
+				message = json.loads(message)
+				message["id_token"] = jwt.decode(message["id_token"], algorithm='RS256', verify=False)
 
-			# Extract POST response headers and their values
-			headers = post_request.info().items()
+				# Extract POST response headers and their values
+				headers = post_request.info().items()
 
 			except urllib.error.HTTPError as e: 
 				response_error = e
