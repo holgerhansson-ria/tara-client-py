@@ -79,7 +79,7 @@ def testclient(request, updated=False):
 		message = request.GET
 		params['code'] = request.GET.get('code')
 
-		return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'auth_query': auth_query, 'params': params})
+		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
