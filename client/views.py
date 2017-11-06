@@ -80,25 +80,26 @@ def testclient(request, updated=False):
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
 
-		# DISABLED: POST request logger
-		# http_logger = urllib.request.HTTPSHandler(debuglevel = 1)
-		# opener = urllib.request.build_opener(http_logger)
-		# urllib.request.install_opener(opener)
-
-		# Encode POST query parameters and create POST request
-		tokenUrl = params['tokenUrl']
-		b64value = generateAuthHeader(params['client_id'], params['secret'])
-		post_params = urllib.parse.urlencode({'grant_type': params['grant_type'], 'code': request.session['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
-		post_query = urllib.request.Request(tokenUrl, post_params)
-		post_query.add_header('Authorization','Basic '+ b64value)
-
-		post_params = readableParams(post_params.decode("utf-8"))
-
-		
-		message = ""
-		response_error = ""
-
 		try:
+			# DISABLED: POST request logger
+			# http_logger = urllib.request.HTTPSHandler(debuglevel = 1)
+			# opener = urllib.request.build_opener(http_logger)
+			# urllib.request.install_opener(opener)
+
+			# Encode POST query parameters and create POST request
+			tokenUrl = params['tokenUrl']
+			b64value = generateAuthHeader(params['client_id'], params['secret'])
+			post_params = urllib.parse.urlencode({'grant_type': params['grant_type'], 'code': request.session['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
+			post_query = urllib.request.Request(tokenUrl, post_params)
+			post_query.add_header('Authorization','Basic '+ b64value)
+
+			post_params = readableParams(post_params.decode("utf-8"))
+
+			
+			message = ""
+			response_error = ""
+
+			try:
 			# Send request and read response message
 			post_request = urllib.request.urlopen(post_query)
 			message = post_request.read().decode("utf-8")
@@ -110,9 +111,12 @@ def testclient(request, updated=False):
 			# Extract POST response headers and their values
 			headers = post_request.info().items()
 
-		except urllib.error.HTTPError as e: 
+			except urllib.error.HTTPError as e: 
+				response_error = e
+				headers = e.headers.items()
+
+		except KeyError as e:
 			response_error = e
-			headers = e.headers.items()
 
 		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_params': post_params, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
