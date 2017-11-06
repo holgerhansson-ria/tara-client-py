@@ -117,6 +117,11 @@ def testclient(request, updated=False):
 
 		except KeyError as e:
 			response_error = e
+			message = ""
+			headers = ""
+			b64value = ""
+			tokenUrl = ""
+			post_params = ""
 
 		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_params': post_params, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
