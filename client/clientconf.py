@@ -5,7 +5,7 @@ default_params = {
 	"tokenUrl": 'https://tara-test.ria.ee/oidc/token',
 	"scope": 'openid',
 	"response_type": 'code',
-	"redirect_uri": "https://tara-client-py.herokuapp.com/response",
+	"redirect_uri": "https://tara-client-py.herokuapp.com/Callback",
 	"client_id": 'openIdDemo2',
 	"secret": 'secret',
 	"state": 'hkMVY7vjuN7xyLs5',
