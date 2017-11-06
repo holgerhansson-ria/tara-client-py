@@ -14,6 +14,7 @@ class parameterForm(forms.Form):
     state = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "State", "id": "state", 'class': "form-control"}))
     response_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Response Type", "id": "response_type", 'class': "form-control"}))
     grant_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Grant Type", "id": "grant_type", 'class': "form-control"}))
+    code = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Code", "id": "code", 'class': "form-control"}))
 
 # Create HTML friendly parameters
 def readableParams(params):
@@ -70,12 +71,15 @@ def testclient(request, updated=False):
 
 	# If URL /callback receives a code from server
 	if(request.GET.get('code')):
+
+		# Won't load old code value
+		updated = True
+
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
-		code = request.GET.get('code')
-		request.session['code'] = code
+		params[code] = request.GET.get('code')
 
-		return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'auth_query': auth_query, 'auth_query_params': readableParams(auth_query_params)})
+		return render(request, 'client/testclient.html', {'message': message, 'code': code, 'form': form, 'auth_query': auth_query, 'params': params})
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
@@ -86,19 +90,15 @@ def testclient(request, updated=False):
 			# opener = urllib.request.build_opener(http_logger)
 			# urllib.request.install_opener(opener)
 
-			if request.session['code'] in (None, ""):
-				request.session['code'] = "empty"
-
 			# Encode POST query parameters and create POST request
 			tokenUrl = params['tokenUrl']
 			b64value = generateAuthHeader(params['client_id'], params['secret'])
-			post_params = urllib.parse.urlencode({'grant_type': params['grant_type'], 'code': request.session['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
+			post_params = urllib.parse.urlencode({'grant_type': params['grant_type'], 'code': params['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
 			post_query = urllib.request.Request(tokenUrl, post_params)
 			post_query.add_header('Authorization','Basic '+ b64value)
 
 			post_params = readableParams(post_params.decode("utf-8"))
 
-			
 			message = ""
 			response_error = ""
 

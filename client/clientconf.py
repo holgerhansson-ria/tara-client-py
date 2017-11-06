@@ -9,5 +9,6 @@ default_params = {
 	"client_id": 'openIdDemo2',
 	"secret": 'secret',
 	"state": 'hkMVY7vjuN7xyLs5',
-	"grant_type": 'authorization_code'
+	"grant_type": 'authorization_code',
+	"code": ""
 }
