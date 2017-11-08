@@ -76,7 +76,10 @@ def testclient(request, updated=False):
 
 	# If user requests authorization code
 	if(request.GET.get('auth')):
-		request.session['has_commented'] = "Yeah"
+		request.session['auth_query_params'] = auth_query_params
+		request.session['post_query_params'] = post_query_params
+		request.session['params'] = params
+		request.session['auth_query'] = auth_query
 		return redirect(auth_query)
 
 	# If URL /callback receives a code from server
@@ -85,10 +88,15 @@ def testclient(request, updated=False):
 		# Won't load old code value
 		updated = True
 
+		# Get last values from session cookies
+		auth_query_params = request.session['auth_query_params'] 
+		post_query_params = request.session['post_query_params']
+		params = request.session['params']
+		auth_query = request.session['auth_query'] 
+
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
-		#params['code'] = request.GET.get('code')
-		params['code'] = request.session['has_commented']
+		params['code'] = request.GET.get('code')
 
 		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
 
