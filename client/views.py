@@ -76,6 +76,7 @@ def testclient(request, updated=False):
 
 	# If user requests authorization code
 	if(request.GET.get('auth')):
+		request.session['has_commented'] = "Yeah"
 		return redirect(auth_query)
 
 	# If URL /callback receives a code from server
@@ -86,7 +87,8 @@ def testclient(request, updated=False):
 
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
-		params['code'] = request.GET.get('code')
+		#params['code'] = request.GET.get('code')
+		params['code'] = request.session['has_commented']
 
 		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
 
