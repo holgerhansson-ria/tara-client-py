@@ -50,13 +50,13 @@
 			<form method="get">
 				<input type="submit" value="Päri identsustõend" name="idtoken" id="id_token" class="btn btn-success"/>
 			</form>
-			{% if post_params is not None %}
+			{% if post_query_params_ec is not None %}
 				POST {{ tokenUrl }} </br>
 				Content-Type: application/x-www-form-urlencoded </br>
 				Authorization: Basic {{ b64value }} </br></br>
 
 				Params: </br>
-				{% for k, v in post_params.items %}
+				{% for k, v in post_query_params_ec.items %}
 					{{ k }}: {{ v }} </br>
 				{% endfor %}
 			{% endif %}

@@ -54,6 +54,10 @@ def testclient(request):
 	# Initiate form for parameters
 	form = parameterForm()
 
+	# If URL /callback receives a code from server, update the values
+	#if(request.GET.get('code')):
+	#	request.session['updated'] = True
+
 	# Use updated values or default values from clientconf.py
 	try:
 		if request.session['updated'] == True:
@@ -66,6 +70,13 @@ def testclient(request):
 		message = ""
 		params_removed = []
 	
+	# Extract code from received GET response and update code in cookie
+	if(request.GET.get('code')):
+		message = request.GET
+		request.session['message'] = message
+		params['code'] = request.GET.get('code')
+		request.session['params'] = params
+		
 	auth_query_params = updateAuthQParams(params, params_removed)
 	id_query_params = updateIdQParams(params, params_removed)
 
@@ -106,15 +117,6 @@ def testclient(request):
 	if(request.GET.get('auth')):
 		request.session['updated'] = True
 		return redirect(auth_query)
-
-	# If URL /callback receives a code from server
-	if(request.GET.get('code')):
-		request.session['updated'] = True
-		# Extract code from received GET response and update code in cookie
-		message = request.GET
-		params['code'] = request.GET.get('code')
-		request.session['params'] = params
-		request.session['message'] = message
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
