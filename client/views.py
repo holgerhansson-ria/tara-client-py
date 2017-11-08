@@ -39,6 +39,13 @@ def generateAuthHeader(client_id, secret):
 
 def testclient(request, updated=False):
 
+	# Try to import parameters from cookie
+	try:
+		if request.session['updated'] == True:
+			updated = True
+	except Exception e:
+		print(e)
+
 	# Import default values from clientconf.py; set initial values
 	if updated == False:
 		params = default_params
@@ -80,13 +87,11 @@ def testclient(request, updated=False):
 		request.session['post_query_params'] = post_query_params
 		request.session['params'] = params
 		request.session['auth_query'] = auth_query
+		request.session['updated'] = True
 		return redirect(auth_query)
 
 	# If URL /callback receives a code from server
 	if(request.GET.get('code')):
-
-		# Won't load old code value
-		updated = True
 
 		# Get last values from session cookies
 		auth_query_params = request.session['auth_query_params'] 
