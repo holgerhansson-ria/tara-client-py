@@ -43,7 +43,7 @@ def testclient(request, updated=False):
 	try:
 		if request.session['updated'] == True:
 			updated = True
-	except Exception e:
+	except Exception as e:
 		print(e)
 
 	# Import default values from clientconf.py; set initial values
