@@ -93,6 +93,8 @@ def testclient(request, updated=False):
 		post_query_params = request.session['post_query_params']
 		params = request.session['params']
 		auth_query = request.session['auth_query'] 
+		print(auth_query)
+		print(params)
 
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
