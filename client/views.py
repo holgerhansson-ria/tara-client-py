@@ -7,14 +7,14 @@ import urllib, base64, json, jwt, requests
 
 
 class parameterForm(forms.Form):
-    client_id = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client ID", "id": "client_id", 'class': "form-control"}))
-    secret = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client Secret", "id": "secret", 'class': "form-control"}))
-    redirect_uri = forms.CharField(required=False, max_length=60, widget=forms.TextInput(attrs={'placeholder': "Redirect URI", "id": "redirect_uri", 'class': "form-control"}))
-    scope = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Scope", "id": "scope", 'class': "form-control"}))
-    state = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "State", "id": "state", 'class': "form-control"}))
-    response_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Response Type", "id": "response_type", 'class': "form-control"}))
-    grant_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Grant Type", "id": "grant_type", 'class': "form-control"}))
-    code = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Code", "id": "code", 'class': "form-control"}))
+    client_id = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client ID", "id": "client_id", 'class': "form-control", 'autocomplete': "off"}))
+    secret = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Client Secret", "id": "secret", 'class': "form-control", 'autocomplete': "off"}))
+    redirect_uri = forms.CharField(required=False, max_length=60, widget=forms.TextInput(attrs={'placeholder': "Redirect URI", "id": "redirect_uri", 'class': "form-control", 'autocomplete': "off"}))
+    scope = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Scope", "id": "scope", 'class': "form-control", 'autocomplete': "off"}))
+    state = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "State", "id": "state", 'class': "form-control", 'autocomplete': "off"}))
+    response_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Response Type", "id": "response_type", 'class': "form-control", 'autocomplete': "off"}))
+    grant_type = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Grant Type", "id": "grant_type", 'class': "form-control", 'autocomplete': "off"}))
+    code = forms.CharField(required=False, max_length=30, widget=forms.TextInput(attrs={'placeholder': "Code", "id": "code", 'class': "form-control", 'autocomplete': "off"}))
 
 # Create HTML friendly parameters
 def readableParams(params):
@@ -39,9 +39,12 @@ def generateAuthHeader(client_id, secret):
 
 def testclient(request, updated=False):
 
-	# Import default values from clientconf.py
+	# Import default values from clientconf.py; set initial values
 	if updated == False:
 		params = default_params
+		auth_query_params = {'scope': params['scope'], 'client_id': params['client_id'], 'response_type': params['response_type'], 'redirect_uri': params['redirect_uri'], 'state': params['state']}
+		post_query_params = {'grant_type': params['grant_type'], 'code': params['code'], 'redirect_uri': params["redirect_uri"]}
+
 
 	# Initiate form for parameters
 	form = parameterForm()
@@ -51,6 +54,7 @@ def testclient(request, updated=False):
 		updated = True
 
 		form = parameterForm(request.POST)
+
 		if form.is_valid():
 			clean_data = form.cleaned_data
 
@@ -59,11 +63,16 @@ def testclient(request, updated=False):
 		# Change all new posted parameters
 		for new_param in posted_params_list:
 			if clean_data.get(new_param) != "":
-				params[new_param] = clean_data.get(new_param)
+				if clean_data.get(new_param) == "removed":
+					auth_query_params.pop(new_param, None)
+					post_query_params.pop(new_param, None)
+					params[new_param] = "removed"
+				else:
+					params[new_param] = clean_data.get(new_param)
 
 	# Build authorization code GET query
-	auth_query_params = urllib.parse.urlencode({'scope': params['scope'], 'client_id': params['client_id'], 'response_type': params['response_type'], 'redirect_uri': params['redirect_uri'], 'state': params['state']}, doseq=True)
-	auth_query = params['authUrl'] + "?" + auth_query_params
+	auth_query_params_ec = urllib.parse.urlencode(auth_query_params, doseq=True)
+	auth_query = params['authUrl'] + "?" + auth_query_params_ec
 
 	# If user requests authorization code
 	if(request.GET.get('auth')):
@@ -92,12 +101,17 @@ def testclient(request, updated=False):
 
 			# Encode POST query parameters and create POST request
 			tokenUrl = params['tokenUrl']
-			b64value = generateAuthHeader(params['client_id'], params['secret'])
-			post_params = urllib.parse.urlencode({'grant_type': params['grant_type'], 'code': params['code'], 'redirect_uri': params["redirect_uri"]}).encode("utf-8")
-			post_query = urllib.request.Request(tokenUrl, post_params)
+			try:
+					b64value = generateAuthHeader(params['client_id'], params['secret'])
+			except KeyError as ke:
+				b64value = generateAuthHeader("","")
+				print(ke)
+
+			post_query_params_ec = urllib.parse.urlencode(post_query_params).encode("utf-8")
+			post_query = urllib.request.Request(tokenUrl, post_query_params_ec)
 			post_query.add_header('Authorization','Basic '+ b64value)
 
-			post_params = readableParams(post_params.decode("utf-8"))
+			post_query_params_ec = readableParams(post_query_params_ec.decode("utf-8"))
 
 			message = ""
 			response_error = ""
@@ -124,9 +138,9 @@ def testclient(request, updated=False):
 			headers = ""
 			b64value = ""
 			tokenUrl = ""
-			post_params = ""
+			post_query_params_ec = ""
 
-		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_params': post_params, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
+		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_query_params_ec': post_query_params_ec, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
 	else:
 		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'params': params})

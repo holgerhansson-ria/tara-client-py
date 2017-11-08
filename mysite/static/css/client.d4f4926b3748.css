@@ -1,8 +1,7 @@
 /* Buttons */
 
-#main_form {
-	margin-top: 15px;
-	margin-left: 15px;
+.btn {
+	border: 1px solid grey;
 }
 
 /* Code blocks */
@@ -27,15 +26,17 @@ pre {
 /* Form */
 
 .form {
-    margin-right: 15px;
+    margin-right: 25px;
 }
 
-.input-group {
+.form-control {
+    margin-bottom: 5px;
     margin-left: 15px;
 }
 
-/* Other */
-
-.keys {
-	margin-left: 5px;
+#main_form {
+	margin-top: 15px;
+	margin-left: 15px;
 }
+
+

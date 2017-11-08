@@ -10,24 +10,27 @@
 	<hr>
   	<h4 class="txt">Parameetrid</h4>
   	<div class="container-fluid">
-  		<form class="form" method="post"> {% csrf_token %}
+  		<form class="form-inline" id="paramForm" method="post"> {% csrf_token %}
 		  	<pre>
 		  		<div class="row">
 		  			<div class="col-sm-12 param">  
 					{% for k, v in params.items %}
-						{{ k }}: {{ v }} </br>
+						<span {% if v == "removed" %} style="text-Decoration:line-through" {% endif %}>
+								{{ k }}: {{ v }}
+						</span>
+						</br>
 					{% endfor %}
 					</div>
-					<div class="row"> 
-			  		{% for field in form  %}
-						<div class="col-sm-3"> 
-			    			{{ field }}
+			  		{% for field in form %}
+			  			<div class="col-sm-3 input-group">
+				    		{{ field }}
+				    		<span type="button" onclick="rmvParam('{{ field.field.widget.attrs.id }}','{{ field.field.widget.attrs.placeholder }}')" id='rmvbtn-{{ field.field.widget.attrs.id }}' class="btn glyphicon glyphicon-remove input-group-addon" style="width: 15px
+				    		;"></span> 
 			    		</div>
 					{% endfor %}
-					</div>
 		  		</div>
 				<div class="row">
-					<button type="submit" id="main_form" class="col-sm-2 btn btn-primary">Muuda</button>
+					<button type="submit" onclick="enableInput()" id="main_form" class="col-sm-2 btn btn-primary">Muuda</button>
 				</div>  
 			</pre>
 		</form>
@@ -75,4 +78,3 @@
 		</pre>
 	</div>
 </html>
-
