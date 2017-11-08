@@ -37,28 +37,41 @@ def generateAuthHeader(client_id, secret):
 
 	return b64auth
 
-def testclient(request, updated=False):
+def updateAuthQParams(params, removed_params=[]):
+	auth_query_params = {'scope': params['scope'], 'client_id': params['client_id'], 'response_type': params['response_type'], 'redirect_uri': params['redirect_uri'], 'state': params['state']}
+	for param in removed_params:
+		auth_query_params.pop(param, None)
+	return auth_query_params
 
-	# Try to import parameters from cookie
-	try:
-		if request.session['updated'] == True:
-			updated = True
-	except Exception as e:
-		print(e)
+def updateIdQParams(params, removed_params=[]):
+	id_query_params = {'grant_type': params['grant_type'], 'code': params['code'], 'redirect_uri': params["redirect_uri"]}
+	for param in removed_params:
+		id_query_params.pop(param, None)
+	return id_query_params
 
-	# Import default values from clientconf.py; set initial values
-	if updated == False:
-		params = default_params
-		auth_query_params = {'scope': params['scope'], 'client_id': params['client_id'], 'response_type': params['response_type'], 'redirect_uri': params['redirect_uri'], 'state': params['state']}
-		post_query_params = {'grant_type': params['grant_type'], 'code': params['code'], 'redirect_uri': params["redirect_uri"]}
-
+def testclient(request):
 
 	# Initiate form for parameters
 	form = parameterForm()
 
+	# Use updated values or default values from clientconf.py
+	try:
+		if request.session['updated'] == True:
+			del request.session['updated']
+			params = request.session['params']
+			message = request.session['message']
+			params_removed = request.session['params_removed']
+	except KeyError as e:
+		params = default_params
+		message = ""
+		params_removed = []
+	
+	auth_query_params = updateAuthQParams(params, params_removed)
+	id_query_params = updateIdQParams(params, params_removed)
+
 	# If user submits changes to parameters
 	if request.method == 'POST':
-		updated = True
+		request.session['updated'] = True
 
 		form = parameterForm(request.POST)
 
@@ -66,16 +79,24 @@ def testclient(request, updated=False):
 			clean_data = form.cleaned_data
 
 		posted_params_list = list(clean_data.keys())
+		params_removed = list()	
 
 		# Change all new posted parameters
 		for new_param in posted_params_list:
 			if clean_data.get(new_param) != "":
 				if clean_data.get(new_param) == "removed":
-					auth_query_params.pop(new_param, None)
-					post_query_params.pop(new_param, None)
+					params_removed.append(new_param)
 					params[new_param] = "removed"
 				else:
 					params[new_param] = clean_data.get(new_param)
+
+		# Update query parameters
+		auth_query_params = updateAuthQParams(params, params_removed)
+		id_query_params = updateIdQParams(params, params_removed)
+		# Save new values
+		request.session['params'] = params
+		request.session['params_removed'] = params_removed
+
 
 	# Build authorization code GET query
 	auth_query_params_ec = urllib.parse.urlencode(auth_query_params, doseq=True)
@@ -83,29 +104,17 @@ def testclient(request, updated=False):
 
 	# If user requests authorization code
 	if(request.GET.get('auth')):
-		request.session['auth_query_params'] = auth_query_params
-		request.session['post_query_params'] = post_query_params
-		request.session['params'] = params
-		request.session['auth_query'] = auth_query
 		request.session['updated'] = True
 		return redirect(auth_query)
 
 	# If URL /callback receives a code from server
 	if(request.GET.get('code')):
-
-		# Get last values from session cookies
-		auth_query_params = request.session['auth_query_params'] 
-		post_query_params = request.session['post_query_params']
-		params = request.session['params']
-		auth_query = request.session['auth_query'] 
-		print(auth_query)
-		print(params)
-
+		request.session['updated'] = True
 		# Extract code from received GET response and update code in cookie
 		message = request.GET
 		params['code'] = request.GET.get('code')
-
-		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
+		request.session['params'] = params
+		request.session['message'] = message
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
@@ -116,15 +125,18 @@ def testclient(request, updated=False):
 			# opener = urllib.request.build_opener(http_logger)
 			# urllib.request.install_opener(opener)
 
-			# Encode POST query parameters and create POST request
+			
 			tokenUrl = params['tokenUrl']
+
+			# If client_id and client_secret values are present, then encode with base64
 			try:
-					b64value = generateAuthHeader(params['client_id'], params['secret'])
+				b64value = generateAuthHeader(params['client_id'], params['secret'])
 			except KeyError as ke:
 				b64value = generateAuthHeader("","")
 				print(ke)
 
-			post_query_params_ec = urllib.parse.urlencode(post_query_params).encode("utf-8")
+			# Encode POST query parameters and create POST request
+			post_query_params_ec = urllib.parse.urlencode(id_query_params).encode("utf-8")
 			post_query = urllib.request.Request(tokenUrl, post_query_params_ec)
 			post_query.add_header('Authorization','Basic '+ b64value)
 
@@ -159,5 +171,18 @@ def testclient(request, updated=False):
 
 		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_query_params_ec': post_query_params_ec, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
+	else:
+		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
+
+def callback(request):
+
+	# If URL /callback receives a code from server
+	if(request.GET.get('code')):
+		# Extract code from received GET response and update code in cookie
+		message = request.GET
+		params['code'] = request.GET.get('code')
+
+		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'params': params, 'message': message, 'code': params['code']})
+
 	else:
 		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'params': params})
