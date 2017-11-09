@@ -53,10 +53,8 @@ def testclient(request):
 
 	# Initiate form for parameters
 	form = parameterForm()
-
-	# If URL /callback receives a code from server, update the values
-	#if(request.GET.get('code')):
-	#	request.session['updated'] = True
+	print(request.COOKIES)
+	print(request.body)
 
 	# Use updated values or default values from clientconf.py
 	try:
@@ -70,7 +68,7 @@ def testclient(request):
 		message = ""
 		params_removed = []
 	
-	# Extract code from received GET response and update code in cookie
+	# If URL /callback receives a code from server, update the values
 	if(request.GET.get('code')):
 		message = request.GET
 		request.session['message'] = message
@@ -120,6 +118,7 @@ def testclient(request):
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
+		request.session['updated'] = True
 
 		try:
 			# DISABLED: POST request logger
@@ -175,16 +174,3 @@ def testclient(request):
 	
 	else:
 		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
-
-def callback(request):
-
-	# If URL /callback receives a code from server
-	if(request.GET.get('code')):
-		# Extract code from received GET response and update code in cookie
-		message = request.GET
-		params['code'] = request.GET.get('code')
-
-		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'params': params, 'message': message, 'code': params['code']})
-
-	else:
-		return render(request, 'client/testclient.html', {'form': form, 'auth_query': auth_query, 'params': params})
