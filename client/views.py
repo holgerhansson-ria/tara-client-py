@@ -61,19 +61,19 @@ def testclient(request):
 			try: 
 				params = request.session['params']
 			except KeyError:
-				pass
+				params = default_params
 			try:
 				message = request.session['message']
 			except KeyError:
-				pass
+				message = ""
 			try:
 				params_removed = request.session['params_removed']
 			except KeyError:
-				pass
+				params_removed = []
 			try:
 				redirection = request.session['rd']
 			except KeyError:
-				pass
+				redirection = ""
 	# or default values from clientconf.py
 	except KeyError as e:
 		params = default_params
