@@ -18,7 +18,7 @@
 					<!-- Add line-through style to all parameters, which have been removed  -->
 						<span {% if v == "removed" %} style="text-Decoration:line-through" {% endif %} >
 						<!-- Update input fields  -->
-						{% if v == "removed" %} <script> rmvParam({{ k }}, {{ v }}) </script> {% endif %}
+						{% if v == "removed" %} <script> rmvParam("{{ k }}", "{{ v }}") </script> {% endif %}
 								{{ k }}: {{ v }}
 						</span>
 						</br>
