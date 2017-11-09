@@ -53,8 +53,6 @@ def testclient(request):
 
 	# Initiate form for parameters
 	form = parameterForm()
-	print(request.COOKIES)
-	print(request.body)
 
 	# Use updated values or default values from clientconf.py
 	try:
@@ -66,6 +64,7 @@ def testclient(request):
 	except KeyError as e:
 		params = default_params
 		message = ""
+		redirection = ""
 		params_removed = []
 	
 	# If URL /callback receives a code from server, update the values
@@ -114,7 +113,10 @@ def testclient(request):
 	# If user requests authorization code
 	if(request.GET.get('auth')):
 		request.session['updated'] = True
-		return redirect(auth_query)
+		print(request.session['updated'])
+		redirection = redirect(auth_query)
+		request.session['rd'] = str(redirection)
+		return redirection
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
@@ -170,7 +172,9 @@ def testclient(request):
 			tokenUrl = ""
 			post_query_params_ec = ""
 
+
 		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_query_params_ec': post_query_params_ec, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
 	else:
-		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'auth_query': auth_query, 'params': params})
+
+		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'params': params, 'redirection': redirection})

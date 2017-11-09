@@ -1,3 +1,4 @@
+// Add removed status to removed parameters 
 document.addEventListener('DOMContentLoaded', function() {
    	var initialFormInputs = document.getElementsByClassName("form-control");
 	var i; 	
