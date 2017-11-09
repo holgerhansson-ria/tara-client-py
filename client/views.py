@@ -54,13 +54,27 @@ def testclient(request):
 	# Initiate form for parameters
 	form = parameterForm()
 
-	# Use updated values or default values from clientconf.py
+	# Use updated values.. 
 	try:
 		if request.session['updated'] == True:
 			del request.session['updated']
-			params = request.session['params']
-			message = request.session['message']
-			params_removed = request.session['params_removed']
+			try: 
+				params = request.session['params']
+			except KeyError:
+				pass
+			try:
+				message = request.session['message']
+			except KeyError:
+				pass
+			try:
+				params_removed = request.session['params_removed']
+			except KeyError:
+				pass
+			try:
+				redirection = request.session['rd']
+			except KeyError:
+				pass
+	# or default values from clientconf.py
 	except KeyError as e:
 		params = default_params
 		message = ""
@@ -113,9 +127,9 @@ def testclient(request):
 	# If user requests authorization code
 	if(request.GET.get('auth')):
 		request.session['updated'] = True
-		print(request.session['updated'])
 		redirection = redirect(auth_query)
 		request.session['rd'] = str(redirection)
+		print(request.session['rd'])
 		return redirection
 
 	# If user requests a id token
@@ -173,7 +187,7 @@ def testclient(request):
 			post_query_params_ec = ""
 
 
-		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_query_params_ec': post_query_params_ec, 'form': form, 'auth_query': auth_query, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
+		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_query_params_ec': post_query_params_ec, 'form': form, 'redirection': redirection, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
 	
 	else:
 
