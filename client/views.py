@@ -128,7 +128,7 @@ def testclient(request):
 	if(request.GET.get('auth')):
 		request.session['updated'] = True
 		redirection = redirect(auth_query)
-		request.session['rd'] = str(redirection)
+		request.session['rd'] = str(redirection[2])
 		print(request.session['rd'])
 		return redirection
 
