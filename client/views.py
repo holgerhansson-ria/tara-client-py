@@ -132,11 +132,11 @@ def testclient(request):
 		id_query_params = updateIdQParams(params, params_removed)
 
 		# If client_id and client_secret values are present, then encode with base64
-		if params.has_key('client_id') and params.has_key('secret'):
+		if 'client_id' in params and 'secret' in params:
 			b64value = generateAuthHeader(params['client_id'], params['secret'])
-		elif params.has_key('client_id'):
+		elif 'client_id' in params:
 			b64value = generateAuthHeader(params['client_id'],"")
-		elif params.has_key('secret'):
+		elif 'secret' in params:
 			b64value = generateAuthHeader("", params['secret'])
 		else:
 			b64value = generateAuthHeader("", params['secret'])
