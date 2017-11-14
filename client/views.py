@@ -57,8 +57,10 @@ def testclient(request):
 
 	# Use updated values or use default ones 
 	if request.session.has_key('updated') and request.session['updated'] == True:
+		print("got updated..")
 		# All parameters
 		if request.session.has_key('params'):
+			print("..params")
 			params = request.session['params']
 			context.update({'params': params})
 		# All parameters, which are removed from queries
@@ -69,6 +71,7 @@ def testclient(request):
 			auth_query = request.session['auth_query']
 			context.update({'auth_query': auth_query})
 	else:
+		print("got default params")
 		params = default_params
 		params_removed = []
 		context.update({'params': params})
