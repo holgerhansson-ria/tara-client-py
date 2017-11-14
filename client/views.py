@@ -155,8 +155,10 @@ def testclient(request):
 			response_msg = post_request.read().decode("utf-8")
 
 			# Convert str response to dict, decode jwt
+			print(response_msg)
 			response_msg = json.loads(response_msg)
 			response_msg["id_token"] = jwt.decode(response_msg["id_token"], algorithm='RS256', verify=False)
+			print(response_msg["id_token"])
 
 			# Extract POST response headers and their values
 			headers = post_request.info().items()
@@ -165,6 +167,6 @@ def testclient(request):
 			response_msg = e
 			headers = e.headers.items()
 
-		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers})
+		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers, 'post_query_params_encoded': post_query_params_encoded})
 
 	return render(request, 'client/testclient.html', context)
