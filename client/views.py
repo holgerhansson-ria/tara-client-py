@@ -163,7 +163,6 @@ def testclient(request):
 			# Extract POST response headers and their values
 			headers = post_request.info().items()
 
-
 		except urllib.error.HTTPError as e:
 			response_msg = e
 			headers = e.headers.items()
