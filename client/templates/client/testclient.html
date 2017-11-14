@@ -76,7 +76,7 @@
 				{% endfor %}
 			</br>
 				{% if not response_msg.id_token %}
-					{% for k, v in response_msg.items %}
+					{% for k, v in response_msg.id_token.items %}
 						{{ k }}: {{ v }} </br>
 					{% endfor %}
 				{% else %}

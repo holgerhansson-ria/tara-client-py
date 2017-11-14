@@ -175,6 +175,7 @@ def testclient(request):
 		except urllib.error.HTTPError as e:
 			print("Error happened") 
 			response_msg = e
+			print(response_msg)
 			headers = e.headers.items()
 
 		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers, 'post_query_params_encoded': post_query_params_encoded})
