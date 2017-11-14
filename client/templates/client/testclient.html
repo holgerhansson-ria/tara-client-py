@@ -41,7 +41,12 @@
 				<form method="get">
 					<input type="submit" value="Päri autoriseerimiskood" name="auth" id="auth" class="btn btn-success"/>
 				</form>
-				{{ redirection }}
+				{% if auth_query is not None %}
+					{% for k, v in auth_query.items %}
+						{% if k == "status_code" %} <span> Status code: {{ v }} </span> </br> {% endif %}
+						{% if k == "url" %} <span> Redirect URI: {{ v }} </span> {% endif %}
+					{% endfor %}
+				{% endif %}
 		</pre>
 	</div>
 	<div class="row">
@@ -49,13 +54,13 @@
 			<form method="get">
 				<input type="submit" value="Päri identsustõend" name="idtoken" id="id_token" class="btn btn-success"/>
 			</form>
-			{% if post_query_params_ec is not None %}
+			{% if post_query_params_encoded is not None %}
 				POST {{ tokenUrl }} </br>
 				Content-Type: application/x-www-form-urlencoded </br>
 				Authorization: Basic {{ b64value }} </br></br>
 
 				Params: </br>
-				{% for k, v in post_query_params_ec.items %}
+				{% for k, v in post_query_params_encoded.items %}
 					{{ k }}: {{ v }} </br>
 				{% endfor %}
 			{% endif %}
@@ -70,10 +75,13 @@
 					{{ item.0 }}: {{ item.1 }} </br>
 				{% endfor %}
 			</br>
-				{% for k, v in message.items %}
-					{{ k }}: {{ v }} </br>
-				{% endfor %}
-				{{ response_error }}
+				{% if not response_msg.id_token %}
+					{% for k, v in response_msg.items %}
+						{{ k }}: {{ v }} </br>
+					{% endfor %}
+				{% else %}
+					{{ response_msg }}
+				{% endif %}
 		</pre>
 	</div>
 

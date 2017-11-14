@@ -53,44 +53,32 @@ def testclient(request):
 
 	# Initiate form for parameters
 	form = parameterForm()
+	context = {'form': form}
 
-	# Use updated values.. 
-	try:
-		if request.session['updated'] == True:
-			del request.session['updated']
-			try: 
-				params = request.session['params']
-			except KeyError:
-				params = default_params
-			try:
-				message = request.session['message']
-			except KeyError:
-				message = ""
-			try:
-				params_removed = request.session['params_removed']
-			except KeyError:
-				params_removed = []
-			try:
-				redirection = request.session['rd']
-			except KeyError:
-				redirection = ""
-	# or default values from clientconf.py
-	except KeyError as e:
+	# Use updated values or use default ones 
+	if request.session.has_key('updated') and request.session['updated'] == True:
+		# All parameters
+		if request.session.has_key('params'):
+			params = request.session['params']
+			context.update({'params': params})
+		# All parameters, which are removed from queries
+		if request.session.has_key('params_removed'):
+			params_removed = request.session['params_removed']
+		# Authorization code query
+		if request.session.has_key('auth_query'):
+			auth_query = request.session['auth_query']
+			context.update({'auth_query': auth_query})
+	else:
 		params = default_params
-		message = ""
-		redirection = ""
 		params_removed = []
-	
+		context.update({'params': params})
+
 	# If URL /callback receives a code from server, update the values
 	if(request.GET.get('code')):
-		message = request.GET
-		request.session['message'] = message
 		params['code'] = request.GET.get('code')
 		request.session['params'] = params
-		
-	auth_query_params = updateAuthQParams(params, params_removed)
-	id_query_params = updateIdQParams(params, params_removed)
-
+		context.update({'response_msg': request.GET, 'code': params['code']})
+	
 	# If user submits changes to parameters
 	if request.method == 'POST':
 		request.session['updated'] = True
@@ -111,84 +99,72 @@ def testclient(request):
 					params[new_param] = "removed"
 				else:
 					params[new_param] = clean_data.get(new_param)
-
-		# Update query parameters
-		auth_query_params = updateAuthQParams(params, params_removed)
-		id_query_params = updateIdQParams(params, params_removed)
+		
 		# Save new values
 		request.session['params'] = params
 		request.session['params_removed'] = params_removed
 
-
-	# Build authorization code GET query
-	auth_query_params_ec = urllib.parse.urlencode(auth_query_params, doseq=True)
-	auth_query = params['authUrl'] + "?" + auth_query_params_ec
-
 	# If user requests authorization code
 	if(request.GET.get('auth')):
 		request.session['updated'] = True
-		redirection = redirect(auth_query)
-		request.session['rd'] = str(redirection)
-		print(request.session['rd'])
+
+		# Update & encode parameters for authorization code query
+		auth_query_params = updateAuthQParams(params, params_removed)
+		auth_url_params_encoded = urllib.parse.urlencode(auth_query_params, doseq=True)
+
+		# Create redirect query & save response for template
+		auth_url = params['authUrl'] + "?" + auth_url_params_encoded
+		redirection = redirect(auth_url)
+		auth_query = {'status_code': redirection.status_code, 'url': redirection.url}
+		request.session['auth_query'] = auth_query
 		return redirection
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
 		request.session['updated'] = True
 
-		try:
-			# DISABLED: POST request logger
-			# http_logger = urllib.request.HTTPSHandler(debuglevel = 1)
-			# opener = urllib.request.build_opener(http_logger)
-			# urllib.request.install_opener(opener)
+		# DISABLED: POST request logger
+		# http_logger = urllib.request.HTTPSHandler(debuglevel = 1)
+		# opener = urllib.request.build_opener(http_logger)
+		# urllib.request.install_opener(opener)
 
-			
-			tokenUrl = params['tokenUrl']
+		# Update id token query POST parameters
+		id_query_params = updateIdQParams(params, params_removed)
 
-			# If client_id and client_secret values are present, then encode with base64
-			try:
-				b64value = generateAuthHeader(params['client_id'], params['secret'])
-			except KeyError as ke:
-				b64value = generateAuthHeader("","")
-				print(ke)
+		# If client_id and client_secret values are present, then encode with base64
+		if params.has_key('client_id') and params.has_key('secret'):
+			b64value = generateAuthHeader(params['client_id'], params['secret'])
+		elif params.has_key('client_id'):
+			b64value = generateAuthHeader(params['client_id'],"")
+		elif params.has_key('secret'):
+			b64value = generateAuthHeader("", params['secret'])
+		else:
+			b64value = generateAuthHeader("", params['secret'])
 
-			# Encode POST query parameters and create POST request
-			post_query_params_ec = urllib.parse.urlencode(id_query_params).encode("utf-8")
-			post_query = urllib.request.Request(tokenUrl, post_query_params_ec)
-			post_query.add_header('Authorization','Basic '+ b64value)
+		# Encode POST query parameters and create POST request
+		tokenUrl = params['tokenUrl']
+		post_query_params_encoded = urllib.parse.urlencode(id_query_params).encode("utf-8")
+		post_query = urllib.request.Request(tokenUrl, post_query_params_encoded)
+		post_query.add_header('Authorization','Basic '+ b64value)
 
-			post_query_params_ec = readableParams(post_query_params_ec.decode("utf-8"))
+		post_query_params_encoded = readableParams(post_query_params_encoded.decode("utf-8"))
 
-			message = ""
-			response_error = ""
+		try: 
+			# Send request and read response message
+			post_request = urllib.request.urlopen(post_query)
+			response_msg = post_request.read().decode("utf-8")
 
-			try:
-				# Send request and read response message
-				post_request = urllib.request.urlopen(post_query)
-				message = post_request.read().decode("utf-8")
+			# Convert str response to dict, decode jwt
+			response_msg = json.loads(response_msg)
+			response_msg["id_token"] = jwt.decode(response_msg["id_token"], algorithm='RS256', verify=False)
 
-				# Convert str response to dict, decode jwt
-				message = json.loads(message)
-				message["id_token"] = jwt.decode(message["id_token"], algorithm='RS256', verify=False)
+			# Extract POST response headers and their values
+			headers = post_request.info().items()
 
-				# Extract POST response headers and their values
-				headers = post_request.info().items()
+		except urllib.error.HTTPError as e: 
+			response_msg = e
+			headers = e.headers.items()
 
-			except urllib.error.HTTPError as e: 
-				response_error = e
-				headers = e.headers.items()
+		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers})
 
-		except Exception as e:
-			response_error = e
-			message = ""
-			headers = ""
-			b64value = ""
-			tokenUrl = ""
-			post_query_params_ec = ""
-
-
-		return render(request, 'client/testclient.html', {'message': message, 'headers': headers, 'response_error': response_error, 'post_query_params_ec': post_query_params_ec, 'form': form, 'redirection': redirection, 'params': params, 'b64value': b64value, 'tokenUrl': tokenUrl})
-	
-	else:
-
-		return render(request, 'client/testclient.html', {'message': message, 'code': params['code'], 'form': form, 'params': params, 'redirection': redirection})
+	return render(request, 'client/testclient.html', context)
