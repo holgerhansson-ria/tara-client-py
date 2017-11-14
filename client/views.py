@@ -55,6 +55,11 @@ def testclient(request):
 	form = parameterForm()
 	context = {'form': form}
 
+	# Delete cookies
+	if(request.GET.get('delete_cookies')):
+		for key in request.session.keys():
+    		del request.session[key]
+
 	# Use updated values or use default ones 
 	if request.session.has_key('updated') and request.session['updated'] == True:
 		print("got updated..")
