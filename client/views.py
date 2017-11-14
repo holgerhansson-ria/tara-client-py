@@ -164,8 +164,9 @@ def testclient(request):
 			headers = post_request.info().items()
 
 		except urllib.error.HTTPError as e:
-			response_msg = e
+			error_msg = e
 			headers = e.headers.items()
+			context.update({'error_msg': error_msg})
 
 		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers, 'post_query_params_encoded': post_query_params_encoded})
 

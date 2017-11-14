@@ -74,16 +74,6 @@
 					{{ item.0 }}: {{ item.1 }} </br>
 				{% endfor %}
 			</br>
-				{% if response_msg.code is not None %}
-					{% if auth_query is not None and "Error" not in response_msg %}
-						{% for k, v in auth_query.items %}
-							{% if k == "status_code" %} <span> Status code: {{ v }} </span> </br></br> {% endif %}
-						{% endfor %}
-					{% endif %}
-					{% for k, v in response_msg.items %}
-						{{ k }}: {{ v }} </br>
-					{% endfor %}
-				{% endif %}
 				{% if response_msg.id_token is not None %}
 					<span>Status code: {{ response_msg.status_code }} </span></br>
 					<span>Access token: {{ response_msg.access_token }} </span></br>
@@ -92,9 +82,17 @@
 					{% for k, v in response_msg.id_token.items %}
 						{{ k }}: {{ v }} </br>
 					{% endfor %}
-				{% elif "Error" in response_msg %}
-					{{ response_msg }}
+				{% else %}
+					{% if error_msg is None %}
+						{% for k, v in auth_query.items %}
+							{% if k == "status_code" %} <span> Status code: {{ v }} </span> </br></br> {% endif %}
+						{% endfor %}
+						{% for k, v in response_msg.items %}
+							{{ k }}: {{ v }} </br>
+						{% endfor %}
+					{% endif %}
 				{% endif %}
+				{{ error_msg }}
 		</pre>
 	</div>
 
