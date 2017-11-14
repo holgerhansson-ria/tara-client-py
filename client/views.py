@@ -163,11 +163,13 @@ def testclient(request):
 			# Extract POST response headers and their values
 			headers = post_request.info().items()
 
+			context.update({'response_msg': response_msg})
+
 		except urllib.error.HTTPError as e:
 			error_msg = e
 			headers = e.headers.items()
 			context.update({'error_msg': error_msg})
 
-		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers, 'post_query_params_encoded': post_query_params_encoded})
+		context.update({'b64value': b64value, 'headers': headers, 'post_query_params_encoded': post_query_params_encoded})
 
 	return render(request, 'client/testclient.html', context)
