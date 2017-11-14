@@ -55,18 +55,10 @@ def testclient(request):
 	form = parameterForm()
 	context = {'form': form}
 
-	# Delete cookies
-	if(request.GET.get('delete_cookies')):
-		print("deleting all cookies")
-		for key in request.session.keys():
-			del request.session[key]
-
 	# Use updated values or use default ones 
 	if request.session.has_key('updated') and request.session['updated'] == True:
-		print("got updated..")
 		# All parameters
 		if request.session.has_key('params'):
-			print("..params")
 			params = request.session['params']
 			context.update({'params': params})
 		# All parameters, which are removed from queries
@@ -74,7 +66,6 @@ def testclient(request):
 			params_removed = request.session['params_removed']
 		# Authorization code query
 	else:
-		print("got default params")
 		params = default_params
 		params_removed = []
 		context.update({'params': params})
@@ -164,18 +155,17 @@ def testclient(request):
 			response_msg = post_request.read().decode("utf-8")
 
 			# Convert str response to dict, decode jwt
-			print(response_msg)
 			response_msg = json.loads(response_msg)
 			response_msg["id_token"] = jwt.decode(response_msg["id_token"], algorithm='RS256', verify=False)
-			print(response_msg["id_token"])
+			status_code = post_request.getcode()
+			response_msg.update({'status_code': status_code})
 
 			# Extract POST response headers and their values
 			headers = post_request.info().items()
 
+
 		except urllib.error.HTTPError as e:
-			print("Error happened") 
 			response_msg = e
-			print(response_msg)
 			headers = e.headers.items()
 
 		context.update({'b64value': b64value, 'response_msg': response_msg, 'headers': headers, 'post_query_params_encoded': post_query_params_encoded})
