@@ -57,6 +57,7 @@ def testclient(request):
 
 	# Delete cookies
 	if(request.GET.get('delete_cookies')):
+		print("deleting all cookies")
 		for key in request.session.keys():
 			del request.session[key]
 
@@ -72,14 +73,16 @@ def testclient(request):
 		if request.session.has_key('params_removed'):
 			params_removed = request.session['params_removed']
 		# Authorization code query
-		if request.session.has_key('auth_query'):
-			auth_query = request.session['auth_query']
-			context.update({'auth_query': auth_query})
 	else:
 		print("got default params")
 		params = default_params
 		params_removed = []
 		context.update({'params': params})
+
+	# Load authorization code query if previously made
+	if request.session.has_key('auth_query'):
+		auth_query = request.session['auth_query']
+		context.update({'auth_query': auth_query})
 
 	# If URL /callback receives a code from server, update the values
 	if(request.GET.get('code')):
@@ -114,7 +117,6 @@ def testclient(request):
 
 	# If user requests authorization code
 	if(request.GET.get('auth')):
-		request.session['updated'] = True
 
 		# Update & encode parameters for authorization code query
 		auth_query_params = updateAuthQParams(params, params_removed)
@@ -129,7 +131,6 @@ def testclient(request):
 
 	# If user requests a id token
 	if(request.GET.get('idtoken')):
-		request.session['updated'] = True
 
 		# DISABLED: POST request logger
 		# http_logger = urllib.request.HTTPSHandler(debuglevel = 1)
