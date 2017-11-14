@@ -79,7 +79,7 @@
 					<span>Status code: {{ response_msg.status_code }} </span></br>
 					<span>Access token: {{ response_msg.access_token }} </span></br>
 					<span>Token type: {{ response_msg.token_type }} </span></br>
-					<span>Expires in: {{ response_msg.expires in }} </span></br>
+					<span>Expires in: {{ response_msg.expires_in }} </span></br>
 					{% for k, v in response_msg.id_token.items %}
 						{{ k }}: {{ v }} </br>
 					{% endfor %}
